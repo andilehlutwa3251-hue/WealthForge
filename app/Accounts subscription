@@ -1,0 +1,44 @@
+'use client';
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+
+export default function ManageSubscription() {
+  const { data: session } = useSession();
+  const [subscription, setSubscription] = useState<any>(null);
+
+  useEffect(() => {
+    if (session?.user?.email) {
+      fetch("/api/subscription").then(res => res.json()).then(setSubscription);
+    }
+  }, [session]);
+
+  const handleCancel = async () => {
+    if (!confirm("Are you sure you want to cancel your subscription?")) return;
+
+    await fetch("/api/subscribe/cancel", { method: "POST" });
+    alert("Subscription cancelled. You will retain access until the end of the billing period.");
+    window.location.reload();
+  };
+
+  if (!subscription) return <div className="p-10">Loading...</div>;
+
+  return (
+    <div className="max-w-2xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Manage Subscription</h1>
+      
+      <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl">
+        <p className="text-lg">Current Plan: <span className="font-semibold text-[#15803d]">{subscription.plan}</span></p>
+        <p className="text-zinc-400 mt-2">Status: {subscription.status}</p>
+
+        {subscription.plan !== "Free" && (
+          <button 
+            onClick={handleCancel}
+            className="mt-8 w-full bg-red-600 hover:bg-red-700 py-3 rounded-xl text-white font-medium"
+          >
+            Cancel Subscription
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
