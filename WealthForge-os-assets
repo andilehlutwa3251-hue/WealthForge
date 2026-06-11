@@ -1,0 +1,3 @@
+git checkout feat/wealth-os-assets
+git pull origin feat/wealth-os-assets
+git push origin feat/wealth-os-assets
