@@ -107,4 +107,7 @@ export default function DashboardPage() {
       </Card>
     </div>
   );
-}
+}git add .
+git commit -m "feat: success page + subscription status in dashboard + subscription API"
+git push
+
