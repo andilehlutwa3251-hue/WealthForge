@@ -1,0 +1,74 @@
+name: Log Failed Deployments
+
+on:
+  workflow_run:
+    workflows: ["Deploy to Vercel"]   # Change this to match your actual Vercel deploy workflow name if different
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: 'Deployment target (vercel, argocd, etc.)'
+        required: true
+        default: 'vercel'
+      failure_type:
+        description: 'Type of failure'
+        required: true
+        default: 'deployment-failed'
+      error_details:
+        description: 'Error details or link to logs'
+        required: false
+        default: 'See workflow run for details'
+
+jobs:
+  log-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up logging
+        run: |
+          mkdir -p deployment-logs
+
+      - name: Log deployment failure
+        run: |
+          TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+          DEPLOY_TARGET="${{ github.event.inputs.deploy_target || 'vercel' }}"
+          FAILURE_TYPE="${{ github.event.inputs.failure_type || 'deployment-failed' }}"
+          ERROR_DETAILS="${{ github.event.inputs.error_details || 'Workflow run failed. See: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}' }}"
+
+          cat > "deployment-logs/${DEPLOY_TARGET}-${FAILURE_TYPE}-${TIMESTAMP}.md" << EOF
+          # Deployment Failure Log (GitHub Actions)
+
+          **Date**: $(date)
+          **Target**: $DEPLOY_TARGET
+          **Failure Type**: $FAILURE_TYPE
+          **Workflow Run**: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          **Branch**: ${{ github.ref_name }}
+          **Commit**: ${{ github.sha }}
+
+          ## Error Details
+          $ERROR_DETAILS
+
+          ## Recommended Next Steps
+          - Check environment variables and secrets in Vercel / GitHub
+          - Review full build logs in the failed workflow run
+          - For 404s: Check next.config.js, dynamic routes, and trailing slash settings
+          - Run local build: npm run build
+          EOF
+
+          echo "✅ Failure log created: deployment-logs/${DEPLOY_TARGET}-${FAILURE_TYPE}-${TIMESTAMP}.md"
+
+      - name: Commit and push failure log
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add deployment-logs/
+          git commit -m "chore: Auto-log failed deployment from GitHub Actions" || echo "No changes to commit"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

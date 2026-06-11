@@ -1,12 +1,22 @@
 #!/bin/bash
 # WealthForge - Log Unsuccessful Deployments
-# Usage: ./scripts/log-deployment-failure.sh "vercel" "build-failed-404" "error-details-here"
+# Usage:
+#   ./scripts/log-deployment-failure.sh "vercel" "build-failed-404" "error details"
+#   AUTO_COMMIT=true ./scripts/log-deployment-failure.sh "vercel" "build-failed-404" "error details"
+#   ./scripts/log-deployment-failure.sh "vercel" "build-failed-404" "error details" --auto-commit
 
 set -euo pipefail
 
-DEPLOY_TARGET=$1:-"unknown"
-FAILURE_TYPE=$2:-"unknown"
-ERROR_DETAILS=$3:-"No details provided"
+DEPLOY_TARGET=${1:-"unknown"}
+FAILURE_TYPE=${2:-"unknown"}
+ERROR_DETAILS=${3:-"No details provided"}
+AUTO_COMMIT=false
+
+# Check for --auto-commit flag or AUTO_COMMIT env var
+if [[ "${4:-}" == "--auto-commit" || "${AUTO_COMMIT:-false}" == "true" ]]; then
+  AUTO_COMMIT=true
+fi
+
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 LOG_DIR="deployment-logs"
 LOG_FILE="${LOG_DIR}/${DEPLOY_TARGET}-${FAILURE_TYPE}-${TIMESTAMP}.md"
@@ -42,7 +52,10 @@ EOF
 
 echo "✅ Failure logged to: $LOG_FILE"
 
-# Optional: Auto-commit the log (uncomment if desired)
-# git add "$LOG_FILE"
-# git commit -m "chore: Log deployment failure - $DEPLOY_TARGET $FAILURE_TYPE $TIMESTAMP"
-# git push
+if [ "$AUTO_COMMIT" = true ]; then
+  echo "📦 Auto-committing failure log..."
+  git add "$LOG_FILE"
+  git commit -m "chore: Log deployment failure - $DEPLOY_TARGET $FAILURE_TYPE $TIMESTAMP"
+  git push origin "$(git rev-parse --abbrev-ref HEAD)"
+  echo "✅ Failure log committed and pushed."
+fi
