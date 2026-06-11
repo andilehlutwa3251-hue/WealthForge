@@ -1,5 +1,6 @@
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export default function DashboardPage() {
   const performance = {
@@ -10,6 +11,16 @@ export default function DashboardPage() {
     inflationBeat: 12,
     lastUpdated: new Date().toLocaleString('en-ZA'),
   };
+
+  // Sample 6-month performance data (ZAR)
+  const chartData = [
+    { month: 'Jan', value: 980000 },
+    { month: 'Feb', value: 1020000 },
+    { month: 'Mar', value: 1085000 },
+    { month: 'Apr', value: 1150000 },
+    { month: 'May', value: 1198000 },
+    { month: 'Jun', value: 1245000 },
+  ];
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white p-6 md:p-10 space-y-10">
@@ -49,7 +60,7 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Equity Section (upgraded) */}
+      {/* Equity Overview */}
       <Card className="bg-zinc-900 border-zinc-800">
         <CardHeader><CardTitle>Equity Overview</CardTitle></CardHeader>
         <CardContent className="space-y-6">
@@ -70,13 +81,30 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Performance Trend Placeholder */}
+      {/* Performance Trend Chart */}
       <Card className="bg-zinc-900 border-zinc-800">
         <CardHeader><CardTitle>6-Month Performance Trend</CardTitle></CardHeader>
-        <CardContent className="h-80 flex items-center justify-center bg-zinc-950 rounded-xl border border-dashed border-zinc-700">
-          <p className="text-zinc-500 text-center">📈 Full Recharts Chart Ready — Reply "add chart" to activate</p>
+        <CardContent className="h-96">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+              <XAxis dataKey="month" stroke="#888" />
+              <YAxis stroke="#888" />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#18181b', border: 'none', color: '#fff' }} 
+                formatter={(value) => [`R ${value.toLocaleString()}`, 'Portfolio Value']}
+              />
+              <Line 
+                type="natural" 
+                dataKey="value" 
+                stroke="#15803d" 
+                strokeWidth={3} 
+                dot={{ fill: '#15803d', r: 5 }} 
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
     </div>
   );
-      }
+}
