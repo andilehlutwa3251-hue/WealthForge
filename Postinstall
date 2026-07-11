@@ -1,0 +1,3 @@
+npm pkg set scripts.postinstall="prisma generate"
+git add package.json && git commit -m "fix: prisma generate postinstall (Vercel build cache)"
+git push
