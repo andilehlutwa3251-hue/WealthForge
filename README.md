@@ -40,3 +40,6 @@ jobs:
         run: |
           echo "Deploying... add your SSH/Render CLI here"
           # ssh user@vps "cd app && git pull && docker-compose up -d"
+          npm pkg set scripts.postinstall="prisma generate"
+git add package.json && git commit -m "fix: prisma generate postinstall (Vercel build cache)"
+git push
