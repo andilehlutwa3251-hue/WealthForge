@@ -1,5 +1,8 @@
 name: Log Failed Deployments
 
+permissions:
+  contents: write
+
 on:
   workflow_run:
     workflows: 
