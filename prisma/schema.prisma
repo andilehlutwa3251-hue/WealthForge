@@ -1,41 +1,158 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id                  String    @id @default(cuid())
-  email               String    @unique
-  name                String?
-  image               String?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  
-  // Subscription fields
-  subscriptionPlan    String    @default("Free") // Free, Pro, Inner Circle
-  subscriptionStatus  String    @default("inactive") // active, cancelled, expired
-  subscriptionUpdatedAt DateTime @default(now())
-  
-  // Relations
-  assets              Asset[]
+  id             String  @id @default(cuid())
+  email          String  @unique
+  hashedPassword String?
+  name           String?
+  image          String?
+
+  wealthScore        Int     @default(0)
+  onboardingComplete Boolean @default(false)
+
+  stripeCustomerId      String? @unique
+  stripeSubscriptionId  String? @unique
+  subscriptionPlan      String  @default("Free")
+  subscriptionStatus    String  @default("inactive")
+
+  assets             Asset[]
+  financialProfile   FinancialProfile?
+  scoreHistory       WealthScoreHistory[]
+  academyEnrollments AcademyEnrollment[]
+  lessonProgress     LessonProgress[]
+  academyStreak      AcademyStreak?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
 }
 
 model Asset {
   id        String   @id @default(cuid())
   name      String
   value     Float
-  type      String   // Investment, Property, Cash, Retirement, Other
+  type      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
+
+  @@index([userId])
+  @@map("assets")
+}
+
+model FinancialProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  monthlyNetIncome Float @default(0)
+  incomeStreams     Int   @default(1)
+
+  hasBudget           Boolean @default(false)
+  monthsEmergencyFund Float   @default(0)
+  hasLifeInsurance    Boolean @default(false)
+  hasIncomeProtection Boolean @default(false)
+  hasDreadDisease     Boolean @default(false)
+
+  unsecuredDebtTotal  Float @default(0)
+  vehicleDebtTotal    Float @default(0)
+  homeLoanTotal       Float @default(0)
+  monthlyDebtPayments Float @default(0)
+  creditScore         Int   @default(0)
+
+  monthlySavings      Float   @default(0)
+  stokvelMonthly      Float   @default(0)
+  hasAutomatedSavings Boolean @default(false)
+
+  tfsaBalance        Float @default(0)
+  tfsaMonthlyContrib Float @default(0)
+  jsePortfolioValue  Float @default(0)
+  raMonthlyContrib   Float @default(0)
+  raBalance          Float @default(0)
+  propertyEquity     Float @default(0)
+
+  fileSARSReturn    Boolean @default(false)
+  claimsRADeduction Boolean @default(false)
+  maximisedTFSA     Boolean @default(false)
+  usesHomeOffice    Boolean @default(false)
+
+  academyScoreEarned Int @default(0)
+  coursesCompleted   Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("financial_profiles")
+}
+
+model WealthScoreHistory {
+  id              String   @id @default(cuid())
+  userId          String
+  score           Int
+  band            String
+  dimensionScores Json
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("wealth_score_history")
+}
+
+model AcademyEnrollment {
+  id          String    @id @default(cuid())
+  userId      String
+  courseId    String
+  scoreEarned Int       @default(0)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  progress LessonProgress[]
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@map("academy_enrollments")
+}
+
+model LessonProgress {
+  id            String   @id @default(cuid())
+  userId        String
+  courseId      String
+  lessonId      String
+  quizScore     Int?
+  quizPassed    Boolean  @default(false)
+  actionDone    Boolean  @default(false)
+  scoreEarned   Int      @default(0)
+  timeSpentSecs Int      @default(0)
+  completedAt   DateTime @default(now())
+
+  enrollment AcademyEnrollment @relation(fields: [userId, courseId], references: [userId, courseId], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@map("lesson_progress")
+}
+
+model AcademyStreak {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  currentStreak  Int      @default(0)
+  longestStreak  Int      @default(0)
+  lastActivityAt DateTime @default(now())
+  totalDays      Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("academy_streaks")
 }
