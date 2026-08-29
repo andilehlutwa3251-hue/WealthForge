@@ -18,16 +18,15 @@ model User {
   wealthScore        Int     @default(0)
   onboardingComplete Boolean @default(false)
 
-  stripeCustomerId      String? @unique
-  stripeSubscriptionId  String? @unique
-  subscriptionPlan      String  @default("Free")
-  subscriptionStatus    String  @default("inactive")
+  stripeCustomerId     String? @unique
+  stripeSubscriptionId String? @unique
+  subscriptionPlan     String  @default("Free")
+  subscriptionStatus   String  @default("inactive")
 
   assets             Asset[]
   financialProfile   FinancialProfile?
   scoreHistory       WealthScoreHistory[]
   academyEnrollments AcademyEnrollment[]
-  lessonProgress     LessonProgress[]
   academyStreak      AcademyStreak?
 
   createdAt DateTime @default(now())
