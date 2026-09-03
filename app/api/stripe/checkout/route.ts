@@ -1,7 +1,7 @@
 import { NextResponse }    from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions }      from '@/lib/auth';
-import stripe               from '@/lib/stripe';
+import { getStripe }        from '@/lib/stripe';
 
 const PRICES: Record<string, string> = {
   forger: process.env.STRIPE_PRICE_FORGER ?? '',
@@ -17,6 +17,7 @@ export async function POST(req: Request) {
   const priceId  = PRICES[plan as keyof typeof PRICES];
   if (!priceId) return NextResponse.json({ error: `Unknown plan: ${plan}` }, { status: 400 });
 
+  const stripe = getStripe();
   const origin = req.headers.get('origin') ?? process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
   const checkout = await stripe.checkout.sessions.create({
     mode:                 'subscription',
