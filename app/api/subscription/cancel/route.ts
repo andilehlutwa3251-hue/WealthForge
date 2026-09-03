@@ -10,7 +10,6 @@ export async function POST() {
     where: { email: session.user.email },
     data: {
       subscriptionStatus: "cancelled",
-      subscriptionUpdatedAt: new Date(),
     },
   });
 
