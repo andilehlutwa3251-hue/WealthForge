@@ -1,0 +1,8 @@
+npm run dev          # Local development
+npm run build        # Generate client → apply migrations → build Next.js
+npm run start        # Production server
+npm run db:generate  # Regenerate Prisma Client
+npm run db:migrate   # Apply pending migrations (production-safe)
+npm run db:push      # Push schema without migrations (prototyping)
+npm run db:studio    # Open Prisma Studio
+npm run db:seed      # Run seed script (if configured)
