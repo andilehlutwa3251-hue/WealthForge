@@ -1,45 +1,63 @@
 # WealthForge
-Repository name: wealthforge Description: WealthForge — Africa’s Creative + Financial Wealth Operating System 
-name: Deploy WealthForge Africa OS
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+WealthForge is a SaaS-style financial operating system for ambitious South Africans. It combines portfolio tracking, AI-guided financial planning, course delivery, and subscription-based access to premium insights.
 
-jobs:
-  test-build-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+## Features
+- Portfolio dashboard and wealth score engine
+- Academy and learning modules
+- Secure credentials-based authentication via NextAuth
+- Prisma/PostgreSQL persistence
+- Stripe checkout and subscription lifecycle support
+- Vercel-ready deployment configuration
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+## Stack
+- Next.js 14
+- TypeScript
+- Prisma + PostgreSQL
+- NextAuth v4
+- Stripe
+- Tailwind CSS
 
-      - name: Install deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest flake8
+## Prerequisites
+- Node.js 18+
+- PostgreSQL database
+- Stripe account and webhook secret
+- Vercel account if deploying there
 
-      - name: Lint + Test
-        run: |
-          flake8. --count --select=E9,F63,F7,F82 --show-source --statistics
-          pytest tests/ -v
+## Setup
 
-      - name: Build Docker
-        run: docker build -t wealthforge-africa-os.
+1. Install dependencies:
+   npm install
 
-      - name: Deploy to VPS/Render/Railway
-        if: github.ref == 'refs/heads/main'
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-        run: |
-          echo "Deploying... add your SSH/Render CLI here"
-          # ssh user@vps "cd app && git pull && docker-compose up -d"
-          npm pkg set scripts.postinstall="prisma generate"
-git add package.json && git commit -m "fix: prisma generate postinstall (Vercel build cache)"
-git push
+2. Copy environment variables:
+   cp .env.example .env.local
+
+3. Update the values in `.env.local` with your own secrets.
+
+4. Push the Prisma schema:
+   npx prisma db push
+
+5. Generate the Prisma client:
+   npx prisma generate
+
+6. Start the app:
+   npm run dev
+
+## Production deploy
+
+For Vercel, add the same environment variables in the project settings. The app expects these values to be available at runtime:
+- DATABASE_URL
+- DIRECT_URL
+- NEXTAUTH_SECRET
+- NEXTAUTH_URL
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
+- STRIPE_PRICE_FORGER
+- STRIPE_PRICE_ELITE
+
+## Useful scripts
+- `npm run build` — production build
+- `npm run lint` — linting
+- `npm run typecheck` — TypeScript validation
+- `npm run db:push` — apply schema updates
+- `npm run db:studio` — Prisma Studio

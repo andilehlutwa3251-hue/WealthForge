@@ -2,7 +2,7 @@ import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
 
 export default withAuth(
-  function middleware(req) {
+  function middleware() {
     return NextResponse.next();
   },
   {
@@ -19,7 +19,10 @@ export const config = {
     '/academy/:path*',
     '/settings/:path*',
     '/api/user/:path*',
+    '/api/assets/:path*',
     '/api/wealth-score/:path*',
+    '/api/subscription/:path*',
+    '/api/stripe/:path*',
     '/api/academy/:path*',
     '/api/ai-coach/:path*',
   ],
