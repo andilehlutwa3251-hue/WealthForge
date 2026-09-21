@@ -1,6 +1,0 @@
-{
-  "framework": "nextjs",
-  "buildCommand": "npx prisma generate && next build",
-  "installCommand": "npm install",
-  "regions": ["cpt1"]
-}
