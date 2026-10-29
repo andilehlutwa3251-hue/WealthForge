@@ -2,37 +2,34 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
-
-permissions:
-  contents: read
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: "file:./dev.db"
       NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/wealthforge
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Use Node.js 20
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: 20
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma client
-        run: npx prisma generate
-
-      - name: Build
-        run: npm run build
+      - name: Type check
+        run: npm run typecheck
 
       - name: Lint
         run: npm run lint
+
+      - name: Build
+        run: npm run build
