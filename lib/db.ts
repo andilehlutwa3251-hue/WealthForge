@@ -1,32 +1,19 @@
 import { Pool, type ClientBase } from 'pg'
-import { Signer } from '@aws-sdk/rds-signer'
-import { attachDatabasePool } from '@vercel/functions'
-import { awsCredentialsProvider } from '@vercel/functions/oidc'
 
-const signer = new Signer({
-  credentials: awsCredentialsProvider({
-    roleArn: process.env.AWS_ROLE_ARN,
-    clientConfig: { region: process.env.AWS_REGION },
-  }),
-  region: process.env.AWS_REGION,
-  hostname: process.env.PGHOST,
-  username: process.env.PGUSER || 'postgres',
-  port: Number(process.env.PGPORT || 5432),
-})
+const connectionString =
+  process.env.DATABASE_URL ||
+  `postgresql://${process.env.PGUSER || 'postgres'}@${process.env.PGHOST || 'localhost'}:${process.env.PGPORT || 5432}/${process.env.PGDATABASE || 'postgres'}`
 
 const pool = new Pool({
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE || 'postgres',
-  port: Number(process.env.PGPORT || 5432),
-  user: process.env.PGUSER || 'postgres',
-  password: () => signer.getAuthToken(),
-  ssl: { rejectUnauthorized: false },
+  connectionString,
+  ssl:
+    process.env.NODE_ENV === 'production' && process.env.DATABASE_URL
+      ? { rejectUnauthorized: false }
+      : false,
   max: 20,
 })
 
-attachDatabasePool(pool)
-
-export function query(text: string, params?: unknown[]) {
+export function query(text: string, params: unknown[] = []) {
   return pool.query(text, params)
 }
 
@@ -76,15 +63,23 @@ export async function recordSubscription(
   currentPeriodEnd: number
 ) {
   await query(
-    `INSERT INTO wealthforge_subscriptions 
-    (stripe_customer_id, stripe_subscription_id, email, plan, status, current_period_start, current_period_end, updated_at) 
-    VALUES ($1, $2, $3, $4, $5, to_timestamp($6), to_timestamp($7), NOW())
-    ON CONFLICT (stripe_subscription_id) DO UPDATE SET
-      status = EXCLUDED.status,
-      current_period_start = EXCLUDED.current_period_start,
-      current_period_end = EXCLUDED.current_period_end,
-      updated_at = NOW()`,
-    [stripeCustomerId, stripeSubscriptionId, email, plan, 'active', currentPeriodStart, currentPeriodEnd]
+    `INSERT INTO wealthforge_subscriptions
+     (stripe_customer_id, stripe_subscription_id, email, plan, status, current_period_start, current_period_end, updated_at)
+     VALUES ($1, $2, $3, $4, $5, to_timestamp($6), to_timestamp($7), NOW())
+     ON CONFLICT (stripe_subscription_id) DO UPDATE
+       SET status = EXCLUDED.status,
+           current_period_start = EXCLUDED.current_period_start,
+           current_period_end = EXCLUDED.current_period_end,
+           updated_at = NOW()`,
+    [
+      stripeCustomerId,
+      stripeSubscriptionId,
+      email,
+      plan,
+      'active',
+      currentPeriodStart,
+      currentPeriodEnd,
+    ]
   )
 }
 
@@ -96,7 +91,10 @@ export async function updateSubscriptionStatus(stripeSubscriptionId: string, sta
 }
 
 export async function getSubscription(email: string) {
-  const result = await query('SELECT * FROM wealthforge_subscriptions WHERE email = $1 ORDER BY created_at DESC LIMIT 1', [email])
+  const result = await query(
+    'SELECT * FROM wealthforge_subscriptions WHERE email = $1 ORDER BY created_at DESC LIMIT 1',
+    [email]
+  )
   return result.rows[0] || null
 }
 
