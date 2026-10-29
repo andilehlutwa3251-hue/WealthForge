@@ -13,12 +13,15 @@ export async function POST(request: Request) {
     await ensureWaitlistTable()
     await query(
       'INSERT INTO wealthforge_waitlist (email) VALUES ($1) ON CONFLICT (email) DO NOTHING',
-      [email],
+      [email]
     )
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error('[v0] Waitlist submission failed:', error)
-    return NextResponse.json({ error: 'We could not save your email. Please try again.' }, { status: 500 })
+    console.error('[WealthForge] Waitlist submission failed:', error)
+    return NextResponse.json(
+      { error: 'We could not save your email. Please try again.' },
+      { status: 500 }
+    )
   }
 }
