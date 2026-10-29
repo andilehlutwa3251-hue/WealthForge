@@ -2,53 +2,32 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  
-  // Better handling for monorepo + clean URLs
+  output: 'standalone',
   trailingSlash: false,
-  
-  // Experimental features for Next.js 15
-  experimental: {
-    optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
+  compress: true,
+  eslint: {
+    ignoreDuringBuilds: false,
   },
-
-  // Image optimization
+  typescript: {
+    ignoreBuildErrors: false,
+  },
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
+    unoptimized: true,
   },
-
-  // Webpack config for better builds
-  webpack: (config, { isServer }) => {
-    // Fixes for some native modules
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-      };
-    }
-    return config;
-  },
-
-  // Headers for security + caching
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
         ],
       },
-    ];
+    ]
   },
-};
+}
 
-module.exports = nextConfig;
+export default nextConfig
